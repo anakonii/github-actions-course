@@ -10,3 +10,17 @@ jobs:
       - name: Multiline Command
         run: |
           node -v
+          npm -v
+  parallel-job-macos:
+    runs-on: macos-latest
+    steps:
+      - name: View SW Version
+        run: sw_vers
+  dependant-job:
+    runs-on: windows-latest
+    needs: [run-shell-commands] # Questo job dipendene dal job run-shell-commands. Ciò significa che questo job non partirà finché il job run-shell-commands non sarà completato con successo.
+    steps:
+      - name: echo a string
+        run: Write-Output "Hello from Windows"
+      - name: Error Step
+        run: doesnt-exist # Questo comando non esiste e causerà un errore. Di conseguenza, questo job fallirà.
