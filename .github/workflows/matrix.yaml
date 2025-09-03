@@ -17,28 +17,64 @@ on: [push]
 # include
 # Serve per aggiungere combinazioni specifiche o aggiungere parametri extra che non verrebbero creati automaticamente dalla matrice.
 
+#------- ORIGINAL --------#
+# X {os: ubuntu-latest, node-version: 14, is-ubuntu: true, experimental: false}
+# {os: ubuntu-latest, node-version: 15, is-ubuntu: true, experimental: false}
+# {os: ubuntu-latest, node-version: 16, is-ubuntu: true, experimental: true}
+# {os: windows-latest, node-version: 14, experimental: false}
+# {os: windows-latest, node-version: 15, experimental: false}
+# {os: windows-latest, node-version: 16, experimental: false}
+# {os: macos-latest, node-version: 15}
+# {os: ubuntu-latest, node-version: 17 }
+
 jobs:
   node-matrix:
+    continue-on-error: ${{ matrix.experimental == true }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
         node-version: [14, 15, 16]
         include:
           - os: ubuntu-latest
-            node-version: 18
-          - os: windows-latest
-            node-version: 18
-        exclude:
-          - os: windows-latest
-            node-version: 14
-          - os: windows-latest
+            is-ubuntu: true
+          - os: macos-latest
             node-version: 15
-          - os: windows-latest
+          - experimental: false
+          - os: ubuntu-latest
             node-version: 16
+            experimental: true
+          - os: ubuntu-latest
+            node-version: 17
+        exclude:
+          - os: ubuntu-latest
+            node-version: 14
+      fail-fast: true
+      # max-parallel: 3
     runs-on: ${{ matrix.os }}
     steps:
+      - if: matrix.experimental == true
+        run: exit 1
       - run: node -v
+      - run: echo '${{ toJson(matrix) }}'
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
       - run: node -v
+    
+# fail-fast è un’opzione della strategia della matrice:
+# Se è true, appena una combinazione fallisce, GitHub cancella/ferma tutte le altre ancora in corso.
+# Se è false, anche se un job fallisce, gli altri continuano comunque fino alla fine.
+
+# continue-on-error: false → un job che fallisce rende fallito anche il workflow.
+# Se è true → un job che fallisce non rende fallito il workflow.
+
+# continue-on-error: false (o non impostato)
+# Se un job fallisce (exit code ≠ 0), GitHub segna quel job come fallito (rosso).
+# Di conseguenza, l’intero workflow viene marcato come fallito (anche se gli altri job finiscono bene).
+
+# Questo non vuol dire che gli altri job vengano fermati per forza. Dipende da fail-fast:
+
+#Se fail-fast: true (come nel tuo file), tutti gli altri job della stessa matrice ancora in esecuzione vengono stoppati subito.
+#Se fail-fast: false, gli altri job della matrice continuano comunque, ma il workflow finale sarà rosso lo stesso.
+
+# max-parallel → limita quanti job di quella matrice possono girare nello stesso momento.
