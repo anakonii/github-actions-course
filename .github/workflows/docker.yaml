@@ -11,3 +11,10 @@ jobs:
         run: |
           node -v
           cat /etc/os-release
+      - name: Send a slack message
+        uses: docker://technosophos/slack-notify
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_TITLE: From Github Actions
+          SLACK_MESSAGE: "Actor: ${{ github.actor }} - Repository: ${{ github.repository }} - Workflow: ${{ github.workflow }} - Job: ${{ github.job }} - EventName: ${{ github.event_name }}"
+          SLACK_COLOR: "#723fc4"
