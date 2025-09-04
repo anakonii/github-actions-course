@@ -1,5 +1,21 @@
 name: Caching and Artifacts
 on: [workflow_dispatch]
+
+# Quando il job parte:
+# actions/cache controlla se esiste già una cache con la chiave (key).
+# Se la trova → estrae i file dalla cache e li mette nella cartella (path) specificata (es: ~/.npm).
+# Se non la trova → non fa nulla, lascia la cartella vuota.
+
+# actions/cache ripristina (se c’è) la cache in ~/.npm.
+
+# Viene lanciato npm install.
+
+# Se la cache era presente → npm userà i pacchetti già scaricati in ~/.npm → installazione veloce.
+
+# Se la cache non c’era → npm scarica i pacchetti da internet e li scrive in ~/.npm.
+
+# A fine job, actions/cache prende la cartella ~/.npm e la salva come cache associata a quella chiave.
+
 jobs:
   use-axios:
     runs-on: ubuntu-latest
@@ -10,7 +26,9 @@ jobs:
         id: cache-dependencies
         with:
           path: ~/.npm
-          key: "npm-cache"
+          key: ${{ runner.os }}-npm-cache-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-cache-
       - name: Display cache output
         run: echo '${{ toJSON(steps.cache-dependencies.outputs) }}'
       - name: Install dependencies
